@@ -5,3 +5,5 @@ pkg/*
 
 bin/*
 !bin/muni
+.idea/*
+*.iml
