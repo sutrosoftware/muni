@@ -20,23 +20,24 @@ module Muni
     end
 
     class << self
-      def find(tag)
+      def find(tag, options = {})
         if tag == :all
-          find_all
+          find_all(options)
         else
           find_by_tag(tag)
         end
       end
 
       private
-        def find_all
-          document = fetch(:routeList)
-          document['route'].collect do |el|
-            Route.new(el)
+        def find_all(options = {})
+          document = fetch(:lines, options)
+          document['ServiceDelivery']['DataObjectDelivery']['dataObjects']['ServiceFrame']['lines']['Line'].collect do |el|
+            Route.new({:tag => el['id'], :title => el['Name'].titleize})
           end
         end
 
         def find_by_tag(tag)
+          puts "got here 3"
           document = fetch(:routeConfig, {:r => tag})
           route = Route.new({:tag => document['route'].first['tag'], :title => document['route'].first['title']})
 

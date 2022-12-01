@@ -5,10 +5,10 @@ require 'muni'
 require 'thor'
 
 class MUNI < Thor
-  desc "list", "Lists all routes"
-  def list
+  desc "list [API KEY]", "Lists all routes"
+  def list(apikey)
     begin
-      Muni::Route.find(:all).each do |route|
+      Muni::Route.find(:all, {:api_key => apikey}).each do |route|
         say_status route.tag, route.title, :green
       end
     rescue Muni::NextBusError => e
