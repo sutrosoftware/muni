@@ -24,7 +24,7 @@ module Muni
         if tag == :all
           find_all(options)
         else
-          find_by_tag(tag)
+          find_by_tag(tag, options)
         end
       end
 
@@ -36,11 +36,12 @@ module Muni
           end
         end
 
-        def find_by_tag(tag)
-          puts "got here 3"
-          document = fetch(:routeConfig, {:r => tag})
-          route = Route.new({:tag => document['route'].first['tag'], :title => document['route'].first['title']})
+        def find_by_tag(tag, options = {})
+          document = fetch(:lines, options.merge({:line_id => tag}))
+          el = document['ServiceDelivery']['DataObjectDelivery']['dataObjects']['ServiceFrame']['lines']['Line']
+          route = Route.new({:tag => el['id'], :title => el['Name']})
 
+=begin
           stops = {}
 
           document['route'].first['stop'].each do |stop|
@@ -71,6 +72,7 @@ module Muni
                 :stops => direction_stops
             })
           end
+=end
 
           route
         end

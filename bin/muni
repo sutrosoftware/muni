@@ -16,12 +16,13 @@ class MUNI < Thor
     end    
   end
   
-  desc "show [ROUTE_TAG] [DIRECTION]", "Shows a specifc route by name"
+  desc "show [API KEY] [ROUTE_TAG] [DIRECTION]", "Shows a specifc route by name"
   method_option :verbose, :type => :boolean, :aliases => %w(-v --verbose)
-  def show(tag, direction = nil)
+  def show(apikey, tag, direction = nil)
     begin
       route = Muni::Route.find(tag)
       say_status route.tag, route.title, :green
+=begin
       dirs = direction ? [route.send(direction.downcase.to_sym)] : route.directions
       dirs.each do |direction|
         say_status direction.id, direction.name, :yellow
@@ -29,6 +30,7 @@ class MUNI < Thor
           print_table direction.stops.collect{|stop| [stop.tag, stop.title]}, {:ident => 8}
         end
       end
+=end
     rescue Muni::NextBusError => e
       say_status "ERROR", e.message, :red
     end      
