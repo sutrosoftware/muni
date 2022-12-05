@@ -7,15 +7,15 @@ require 'muni/direction'
 module Muni
   class Route < Base
     def direction_at(direction)
-      return send(direction.downcase.to_sym) if direction =~ /(outbound|inbound)/i
+      return send(direction.downcase.to_sym) if direction =~ /(ob|ib)/i
       directions.select { |dir| dir.id == direction }.first
     end
 
-    def outbound
+    def ob
       directions.select { |dir| dir.name =~ /outbound/i }.first
     end
 
-    def inbound
+    def ib
       directions.select { |dir| dir.name =~ /inbound/i }.first
     end
 
@@ -55,7 +55,8 @@ module Muni
                           :lon => stop['Location']['Longitude'],
                           :stopId => stop['id'],
                           :route_tag => '43',
-                          :direction => 'IB'
+                          :direction => 'IB',
+                          :api_key => options[:api_key]
                         })
           ibstops << st
         end
@@ -71,12 +72,12 @@ module Muni
                           :lon => stop['Location']['Longitude'],
                           :stopId => stop['id'],
                           :route_tag => '43',
-                          :direction => 'OB'
-                        })
+                          :direction => 'OB',
+                          :api_key => options[:api_key]
+          })
           obstops << st
         end
         route.directions << Direction.new({ :id => 'OB', :name => 'Outbound', :stops => obstops })
-
         route
       end
     end
