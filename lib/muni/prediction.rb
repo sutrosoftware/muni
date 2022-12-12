@@ -4,7 +4,7 @@ module Muni
   class Prediction < Base
     include ActionView::Helpers::DateHelper
     def time
-      Time.at((epochTime.to_i / 1000.0).to_i)
+      Time.at(epochTime)
     end
 
     def pretty_time

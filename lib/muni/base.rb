@@ -17,7 +17,7 @@ module Muni
       def build_url(command, options = {})
         url = "https://api.511.org/transit/#{command}?operator_id=SF&agency=SF&format=xml"
         options.each { |key,value| url << "&#{key}=#{value}" }
-        puts "fetching: #{url}"
+        #        puts "fetching: #{url}"
         url
       end
 
