@@ -20,66 +20,66 @@ module Muni
     end
 
     class << self
-      def find(tag, options = {})
+      def find(tag)
         if tag == :all
-          find_all(options)
+          find_all
         else
-          find_by_tag(tag, options)
+          find_by_tag(tag)
         end
       end
 
       private
-
-      def find_all(options = {})
-        document = fetch(:lines, options)
-        document['ServiceDelivery']['DataObjectDelivery']['dataObjects']['ServiceFrame']['lines']['Line'].collect do |el|
-          Route.new({ :tag => el['id'], :title => el['Name'].titleize })
+        def find_all
+          document = fetch(:lines, {:api_key => APIKEY})
+          document['ServiceDelivery']['DataObjectDelivery']['dataObjects']['ServiceFrame']['lines']['Line'].collect do |el|
+            Route.new({ :tag => el['id'], :title => el['Name'].titleize })
+          end
         end
-      end
 
-      def find_by_tag(tag, options = {})
-        document = fetch(:lines, options.update({ :line_id => tag }))
-        el = document['ServiceDelivery']['DataObjectDelivery']['dataObjects']['ServiceFrame']['lines']['Line']
-        route = Route.new({ :tag => el['id'], :title => el['Name'].titleize })
-        route.directions = []
-        ibstops = []
-        obstops = []
+        def find_by_tag(tag)
+          options = {:api_key => APIKEY}
+          document = fetch(:lines, options.update({ :line_id => tag }))
+          el = document['ServiceDelivery']['DataObjectDelivery']['dataObjects']['ServiceFrame']['lines']['Line']
+          route = Route.new({ :tag => el['id'], :title => el['Name'].titleize })
+          route.directions = []
+          ibstops = []
+          obstops = []
 
-        # Inbound
-        document = fetch(:stops, options.merge({ :direction_id => 'IB' }))
-        document['ServiceDelivery']['DataObjectDelivery']['dataObjects']['ServiceFrame']['scheduledStopPoints']['ScheduledStopPoint'].each do |stop|
-          st = Stop.new({
-                          :tag => stop['id'],
-                          :title => stop['Name'],
-                          :lat => stop['Location']['Latitude'],
-                          :lon => stop['Location']['Longitude'],
-                          :stopId => stop['id'],
-                          :route_tag => '43',
-                          :direction => 'IB',
-                          :api_key => options[:api_key]
-                        })
-          ibstops << st
+          # Inbound
+          document = fetch(:stops, options.merge({ :direction_id => 'IB' }))
+          document['ServiceDelivery']['DataObjectDelivery']['dataObjects']['ServiceFrame']['scheduledStopPoints']['ScheduledStopPoint'].each do |stop|
+            st = Stop.new({
+                            :tag => stop['id'],
+                            :title => stop['Name'],
+                            :lat => stop['Location']['Latitude'],
+                            :lon => stop['Location']['Longitude'],
+                            :stopId => stop['id'],
+                            :route_tag => '43',
+                            :direction => 'IB',
+                            :api_key => options[:api_key]
+                          })
+            ibstops << st
+          end
+          route.directions << Direction.new({ :id => 'IB', :name => 'Inbound', :stops => ibstops })
+
+          # Outbound
+          document = fetch(:stops, options.merge({ :direction_id => 'OB' }))
+          document['ServiceDelivery']['DataObjectDelivery']['dataObjects']['ServiceFrame']['scheduledStopPoints']['ScheduledStopPoint'].each do |stop|
+            st = Stop.new({
+                            :tag => stop['id'],
+                            :title => stop['Name'],
+                            :lat => stop['Location']['Latitude'],
+                            :lon => stop['Location']['Longitude'],
+                            :stopId => stop['id'],
+                            :route_tag => '43',
+                            :direction => 'OB',
+                            :api_key => options[:api_key]
+            })
+            obstops << st
+          end
+          route.directions << Direction.new({ :id => 'OB', :name => 'Outbound', :stops => obstops })
+          route
         end
-        route.directions << Direction.new({ :id => 'IB', :name => 'Inbound', :stops => ibstops })
-
-        # Outbound
-        document = fetch(:stops, options.merge({ :direction_id => 'OB' }))
-        document['ServiceDelivery']['DataObjectDelivery']['dataObjects']['ServiceFrame']['scheduledStopPoints']['ScheduledStopPoint'].each do |stop|
-          st = Stop.new({
-                          :tag => stop['id'],
-                          :title => stop['Name'],
-                          :lat => stop['Location']['Latitude'],
-                          :lon => stop['Location']['Longitude'],
-                          :stopId => stop['id'],
-                          :route_tag => '43',
-                          :direction => 'OB',
-                          :api_key => options[:api_key]
-          })
-          obstops << st
-        end
-        route.directions << Direction.new({ :id => 'OB', :name => 'Outbound', :stops => obstops })
-        route
-      end
     end
   end
 end

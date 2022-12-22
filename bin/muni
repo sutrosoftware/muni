@@ -5,11 +5,11 @@ require 'muni'
 require 'thor'
 
 class MUNI < Thor
-  desc "list [API KEY]", "Lists all routes"
+  desc "list", "Lists all routes"
 
-  def list(apikey)
+  def list
     begin
-      Muni::Route.find(:all, { :api_key => apikey }).each do |route|
+      Muni::Route.find(:all).each do |route|
         say_status route.tag, route.title, :green
       end
     rescue Muni::NextBusError => e
@@ -17,12 +17,12 @@ class MUNI < Thor
     end
   end
 
-  desc "show [API KEY] [ROUTE_TAG] [DIRECTION]", "Shows a specifc route by name"
+  desc "show [ROUTE_TAG] [DIRECTION]", "Shows a specifc route by name"
   method_option :verbose, :type => :boolean, :aliases => %w(-v --verbose)
 
-  def show(apikey, tag, direction = nil)
+  def show(tag, direction = nil)
     begin
-      route = Muni::Route.find(tag, { :api_key => apikey })
+      route = Muni::Route.find(tag)
       say_status route.tag, route.title, :green
       route.directions.each do |dir|
         if !direction || dir.id == direction
@@ -37,9 +37,9 @@ class MUNI < Thor
     end
   end
 
-  desc "predict [API KEY] [ROUTE] [DIRECTION] [STOP]", "Retrieve predictions for a route at a specific stop"
+  desc "predict [ROUTE] [DIRECTION] [STOP]", "Retrieve predictions for a route at a specific stop"
 
-  def predict(apikey, route, direction, *stop)
+  def predict(route, direction, *stop)
     # Join the remaining arguments so that predict can be called without
     # having to quote the stop name.
     stop = stop.join(' ')
@@ -51,7 +51,7 @@ class MUNI < Thor
 
     # Get the bus route information
     # TODO Only do this if necessary
-    bus = Muni::Route.find(route, {:api_key => apikey})
+    bus = Muni::Route.find(route)
 
     # Look up the directon information
     direction = bus.direction_at(direction)
