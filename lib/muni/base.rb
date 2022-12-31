@@ -15,7 +15,8 @@ module Muni
           ttl = PREDTTL
         end
         doc = @@zache.get(url.to_sym, lifetime: ttl) {
-          File.write("/tmp/muni.log", "fetching #{url}", mode: 'a')
+          #          File.write("/tmp/muni.log", "fetching #{url}\n", mode: 'a')
+          puts "fetching #{url}"
           json = Net::HTTP.get(URI.parse(url))
           JSON.parse(json) || {}
         }
