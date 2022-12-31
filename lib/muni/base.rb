@@ -1,21 +1,29 @@
-require "ostruct"
+require 'ostruct'
+require 'zache'
 
 module Muni
   class NextBusError < StandardError; end
   class Base < OpenStruct
+    @@zache = Zache.new
     class << self
       private
 
       def fetch(command, options = {})
         url = build_url(command, options)
-        xml = Net::HTTP.get(URI.parse(url))
-        doc = XmlSimple.xml_in(xml) || {}
-        fail NextBusError, doc['Error'].first['content'].gsub(/\n/,'') if doc['Error']
+        ttl = ROUTETTL
+        if url.include? "pred"
+          ttl = PREDTTL
+        end
+        doc = @@zache.get(url.to_sym, lifetime: ttl) {
+          #          puts "fetching #{url}"
+          json = Net::HTTP.get(URI.parse(url))
+          JSON.parse(json) || {}
+        }
         doc
       end
 
       def build_url(command, options = {})
-        url = "https://retro.umoiq.com/service/publicXMLFeed?command=#{command}&a=sfmuni-sandbox"
+        url = "https://webservices.umoiq.com/api/pub/v1/agencies/sfmta-cis/#{command}?key=#{APIKEY}"
         options.each { |key,value| url << "&#{key}=#{value}" }
         url
       end

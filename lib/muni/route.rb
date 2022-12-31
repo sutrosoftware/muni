@@ -1,5 +1,5 @@
 require 'net/http'
-require 'xmlsimple'
+require 'json'
 
 require 'muni/stop'
 require 'muni/direction'
@@ -8,15 +8,15 @@ module Muni
   class Route < Base
     def direction_at(direction)
       return send(direction.downcase.to_sym) if direction =~ /(outbound|inbound)/i
-      directions.select{|dir| dir.id == direction}.first
+      directions.select { |dir| dir.id == direction }.first
     end
 
     def outbound
-      directions.select{ |dir| dir.name =~ /outbound/i }.first
+      directions.select { |dir| dir.name =~ /ob/i }.first
     end
 
     def inbound
-      directions.select{ |dir| dir.name =~ /inbound/i }.first
+      directions.select { |dir| dir.name =~ /ib/i }.first
     end
 
     class << self
@@ -30,47 +30,42 @@ module Muni
 
       private
         def find_all
-          document = fetch(:routeList)
-          document['route'].collect do |el|
-            Route.new(el)
+          document = fetch(:routes)
+          document.collect do |el|
+            Route.new({ :tag => el['id'], :title => el['title'] })
           end
         end
 
         def find_by_tag(tag)
-          document = fetch(:routeConfig, {:r => tag})
-          route = Route.new({:tag => document['route'].first['tag'], :title => document['route'].first['title']})
+          document = fetch("routes/#{tag}")
+          route = Route.new({ :tag => document['id'], :title => document['title'] })
+          route.directions = []
+          ibstops = []
+          obstops = []
 
-          stops = {}
-
-          document['route'].first['stop'].each do |stop|
+          document['stops'].each do |stop|
+            dir = "inbound"
+            dirstr = stop['directions'][0]
+            if dirstr["_0_"]
+              dir = "outbound"
+            end
             st = Stop.new({
-              :tag => stop['tag'],
-              :title => stop['title'],
-              :lat => stop['lat'],
-              :lon => stop['lon'],
-              :stopId => stop['lat'],
-            })
-            stops[st.tag] = st
-          end
-
-          directions = []
-          route.directions = document['route'].first['direction'].collect do |direction|
-            direction_stops = direction['stop'].collect do |stop|
-              stops[stop['tag']]
+                            :tag => stop['code'],
+                            :title => stop['name'],
+                            :lat => stop['lat'],
+                            :lon => stop['lon'],
+                            :stopId => stop['code'],
+                            :route_tag => tag,
+                            :direction => dir
+                          })
+            if dir == 'inbound'
+              ibstops << st
+            else
+              obstops << st
             end
-
-            direction_stops.each do |stop|
-              stop.route_tag = route.tag
-              stop.direction = direction['tag']
-            end
-
-            Direction.new({
-                :id => direction['tag'],
-                :name => direction['title'],
-                :stops => direction_stops
-            })
           end
-
+          route.directions << Direction.new({ :id => 'inbound', :name => 'IB', :stops => ibstops })
+          route.directions << Direction.new({ :id => 'outbound', :name => 'OB', :stops => obstops })
           route
         end
     end

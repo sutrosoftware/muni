@@ -7,3 +7,4 @@ bin/*
 !bin/muni
 .idea/*
 *.iml
+.env

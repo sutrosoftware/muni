@@ -6,6 +6,7 @@ require 'thor'
 
 class MUNI < Thor
   desc "list", "Lists all routes"
+
   def list
     begin
       Muni::Route.find(:all).each do |route|
@@ -13,52 +14,55 @@ class MUNI < Thor
       end
     rescue Muni::NextBusError => e
       say_status "ERROR", e.message, :red
-    end    
+    end
   end
-  
+
   desc "show [ROUTE_TAG] [DIRECTION]", "Shows a specifc route by name"
   method_option :verbose, :type => :boolean, :aliases => %w(-v --verbose)
+
   def show(tag, direction = nil)
     begin
       route = Muni::Route.find(tag)
       say_status route.tag, route.title, :green
-      dirs = direction ? [route.send(direction.downcase.to_sym)] : route.directions
-      dirs.each do |direction|
-        say_status direction.id, direction.name, :yellow
-        if options.verbose            
-          print_table direction.stops.collect{|stop| [stop.tag, stop.title]}, {:ident => 8}
+      route.directions.each do |dir|
+        if !direction || dir.id == direction
+          say_status dir.id, dir.name, :yellow
+          if options.verbose
+            print_table dir.stops.collect { |stop| [stop.tag, stop.title] }, { :ident => 8 }
+          end
         end
       end
     rescue Muni::NextBusError => e
       say_status "ERROR", e.message, :red
-    end      
+    end
   end
-  
+
   desc "predict [ROUTE] [DIRECTION] [STOP]", "Retrieve predictions for a route at a specific stop"
+
   def predict(route, direction, *stop)
     # Join the remaining arguments so that predict can be called without
     # having to quote the stop name.
     stop = stop.join(' ')
-    
+
     if stop.empty?
       say_status "ERROR", "A stop is required", :red
       exit!
     end
-    
+
     # Get the bus route information
     # TODO Only do this if necessary
     bus = Muni::Route.find(route)
 
     # Look up the directon information
     direction = bus.direction_at(direction)
-    
+
     # Look up the stop information
     stop = direction.stop_at(stop)
-    
+
     # Retrieve the predictions
     begin
       say "Route #{bus.title} going #{direction.name} at #{stop.title}:"
-      print_table stop.predictions.collect{|time| [time.vehicle, time.pretty_time]}, {:ident => 8}
+      print_table stop.predictions.collect { |time| [time.vehicle, time.pretty_time] }, { :ident => 8 }
     rescue Muni::NextBusError => e
       say_status "ERROR", e.message, :red
     end
