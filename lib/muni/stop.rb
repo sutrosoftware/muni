@@ -6,16 +6,22 @@ module Muni
   class Stop < Base
     def predictions
       retval = []
-      stop = Stop.send(:fetch, :StopMonitoring, stopcode: tag, api_key: api_key)
+      stop = Stop.send(:fetch, "stopcodes/#{tag}/predictions")
       # filter below list by stop object properties route & direction
-      stop['ServiceDelivery']['StopMonitoringDelivery']['MonitoredStopVisit'].each do |pred|
-        #        pred['MonitoredVehicleJourney']['PublishedLineName'].titleize
-        line = pred['MonitoredVehicleJourney']['LineRef']
-        dir = pred['MonitoredVehicleJourney']['DirectionRef']
-        if line == route_tag && dir == direction
-          artime = pred['MonitoredVehicleJourney']['MonitoredCall']['ExpectedArrivalTime']
-          etime = Time.parse(artime).to_i
-          retval.push(Prediction.new({:epochTime => etime}))
+      stop.each do |pred|
+        line = pred['route']['id']
+        if line == route_tag
+          pred['values'].each do |arrival|
+            dir = "inbound"
+            dirstr = arrival['direction']['id']
+            if dirstr["_0_"]
+              dir = "outbound"
+            end
+            if dir == direction
+              etime = arrival['timestamp'] / 1000
+              retval.push(Prediction.new({:epochTime => etime}))
+            end
+          end
         end
       end
       retval
