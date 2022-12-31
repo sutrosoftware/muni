@@ -16,7 +16,7 @@ module Muni
       def build_url(command, options = {})
         url = "https://webservices.umoiq.com/api/pub/v1/agencies/sfmta-cis/#{command}?key=#{APIKEY}"
         options.each { |key,value| url << "&#{key}=#{value}" }
-        puts "fetching: #{url}"
+#        puts "fetching: #{url}"
         url
       end
 
