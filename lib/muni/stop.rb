@@ -1,6 +1,5 @@
 require 'muni/base'
 require 'muni/prediction'
-require 'time'
 
 module Muni
   class Stop < Base
